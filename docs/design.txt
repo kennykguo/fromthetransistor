@@ -1,0 +1,12 @@
+module [design_name] ( [ports] );
+
+	[input_ports]
+	[output_ports]
+
+	[other_signals]
+
+	[other_module_instantiations_if_required]
+
+	[behavioral_code_for_this_module]
+
+endmodule
