@@ -1,1 +1,2 @@
 verilator -Wall --trace -cc blinking_led.v --exe --build -j 0 sim_main.cpp
+./obj_dir/Vblinking_led

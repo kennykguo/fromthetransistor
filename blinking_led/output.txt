@@ -1,0 +1,22 @@
+Time  16: LED changed to ON
+Tick  10: [*]
+Time  32: LED changed to OFF
+Tick  20: [ ]
+Time  48: LED changed to ON
+Tick  30: [*]
+Time  64: LED changed to OFF
+Tick  40: [ ]
+Time  80: LED changed to ON
+Time  96: LED changed to OFF
+Tick  50: [ ]
+Time 112: LED changed to ON
+Tick  60: [*]
+Time 128: LED changed to OFF
+Tick  70: [ ]
+Time 144: LED changed to ON
+Tick  80: [*]
+Time 160: LED changed to OFF
+Time 176: LED changed to ON
+Tick  90: [*]
+Time 192: LED changed to OFF
+Tick 100: [ ]
