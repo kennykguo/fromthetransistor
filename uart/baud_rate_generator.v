@@ -4,7 +4,7 @@ module baud_rate_generator(
     input clk,          // System clock
     output reg baud_clk // UART clock
 );
-    parameter DIVISOR = 2604; // half of 5208
+    parameter DIVISOR = 10'd2604; // half of 5208
 
     always @(posedge clk)
     begin
