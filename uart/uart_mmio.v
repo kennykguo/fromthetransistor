@@ -120,3 +120,4 @@ endmodule
 // input tx_busy - this comes from uart_tx indicating whether a transmission is currently in progress. your status register needs to reflect this state so the cpu can poll before sending the next byte.
 
 // your mmio acts as the temporal bridge - it captures asynchronous uart events and presents them through a synchronous register interface that the cpu can access at any time.
+// https://claude.ai/chat/4b112408-5598-4c92-9510-3a6b4fce4b49
