@@ -5,6 +5,7 @@ module uart_mmio(
     
     // bus interface
     input [32-1:0] addr,
+
     input [8-1:0] write_data,
     input write_enable,
 
@@ -12,8 +13,9 @@ module uart_mmio(
     input read_enable,
     
     // uart signals
-    input [7:0] rx_data,
-    input rx_data_valid,
+    output [7:0] rx_data,
+    output rx_data_valid,
+    input rx_busy,
 
     output [7:0] tx_data,
     output tx_data_valid,
@@ -21,33 +23,79 @@ module uart_mmio(
 );
     // register map:
     // 0x00: status register (read-only)
-    // 0x08: control register
+    // 0x04: data register
 
     // internal counters for counting - lets say the buffer sizes are ten for input and output buffers
-
     // the cpu and the uart interface are separately operating. this is why we have the mmio (memory managed input output)
-
     // input buffer (put into buffer when user writes. taken out of buffer, when uart wants to write it out)
-
     // output buffer (received from tx, and put into buffer. taken out from buffer when user wants to read)
-    
-    parameter WAITING = 2'b00, RECEIVED_BIT = 2'b01, SENDING_BIT = 2'b10;
 
+    reg [7:0] tx_buffer [0:9]; // 10 bytes total - circular buffer
+    reg [3:0] tx_ptr = 0; // points to next write location
+    reg [3:0] tx_cur_ptr = 0; // points to next write location
+    reg [3:0] tx_count = 0;     // how many bytes currently stored
+
+    reg [7:0] rx_buffer [0:9]; // 10 bytes total - circular buffer
+    reg [3:0] rx_ptr = 0; // points to next read location 
+    reg [3:0] rx_cur_ptr = 0; // points to next write location
+    reg [3:0] tx_count = 0; // how many bytes currently stored
+
+    parameter STATUS_REG = 10'h00, DATA_REG= 10'h04; 
+    parameter WAITING = 2'b00, RECEIVED_BIT = 2'b01, SENDING_BIT = 2'b10;
+    wire rx_data_read = read_enable && (addr == DATA_REG); // read operation should trigger side effect
+    wire tx_data_write = write_enable && (addr == DATA_REG); // read operation should trigger side effect
     reg [1:0] state_cur = IDLE, state_prev = IDLE; // 2 bits for state (4 total -> 2^2)
 
     always @(posedge clk) begin
-
         case (state_cur)
             WAITING: begin
-               // check current state of rx
+
+                // receive in input buffer
+                if (rx_data_read) begin
+                    if (rx_count < 10'd10) begin
+                        state_cur <= RECEIVED_BIT;
+                    end
+                end
+
+                // transmit/send output buffer
+                if (tx_data_write) begin
+                    if (tx_count < 10'd10) begin
+                        state_cur <= SENDING_BIT;
+                    end
+                end
+
+                // take out of input buffer and send to tx
+                if (tx_count > 0 && ~tx_busy) begin
+                    tx_data <= tx_buffer[tx_cur_ptr];
+                    tx_cur_ptr <= tx_cur_ptr + 1;
+                    tx_count <= tx_count + 1;
+                end
+
+                // take out of output buffer and send to rx
+                if (rx_count > 0 && ~rx_busy) begin
+                    rx_data <= rx_buffer[rx_cur_ptr];
+                    rx_cur_ptr <= rx_cur_ptr + 1;
+                    rx_count <= rx_count + 1;
+                end
+
             end
 
-            RECEIVED_BIT: begin
-            
+            RECEIVED_BIT: begin // send receive data to buffer
+                rx_buffer[rx_count] <= rx_data;
+                rx_count = rx_count + 1;
+                if (rx_count == 10'd9) begin
+                    rx_count <= 0;
+                end
+                state_cur <= WAITING;
             end
 
-            SENDING_BIT: begin
-            
+            SENDING_BIT: begin // send write data to buffer
+                tx_buffer[tx_count] <= write_data;
+                tx_count = tx_count + 1;
+                if (tx_count == 10'd9) begin
+                    tx_count <= 0;
+                end
+                state_cur <= WAITING;
             end
         
         endcase

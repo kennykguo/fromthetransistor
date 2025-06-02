@@ -20,7 +20,6 @@ module uart_top(
     // uart_tx - transmits data
     // uart_rx - receives data
     // baud_rate_generator - creates timing signals
-    
 
     uart_rx(
         input clk, // oversampled baud clock (typically 16x)
