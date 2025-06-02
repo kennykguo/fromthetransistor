@@ -7,7 +7,7 @@
 // assuming a 50mhz clock, and 9600 baud rate config
 module uart_rx(
     input clk, // oversampled baud clock (typically 16x)
-    input rx, // RX line
+    input rx, // rx line
     output reg [7:0] data, // received data
     output reg data_valid // indicates new data available
 );

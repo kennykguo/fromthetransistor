@@ -1,12 +1,13 @@
 // TX pin of UART
 
 // assuming a 50mhz clock, and 9600 baud rate config
+// sends a piece of data
 module uart_tx(
-    input clk,           // Baud rate clock
-    input [7:0] data,    // Data to send
-    input data_valid,    // Signal to start transmission
-    output reg tx,       // TX line
-    output reg tx_busy   // Indicates transmission in progress
+    input clk,           // baud rate clock
+    input [7:0] data,    // data to send
+    input data_valid,    // signal to start transmission
+    output reg tx,       // tx line
+    output reg tx_busy   // indicates transmission in progress
 );
     // 1. Wait for data_valid in IDLE
     // 2. Send start bit (logic 0)

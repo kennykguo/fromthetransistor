@@ -5,6 +5,7 @@ module baud_rate_generator(
     output reg baud_clk // UART clock
 );
     parameter DIVISOR = 10'd2604; // half of 5208
+    reg [9:0] counter = 0; // counter variable
 
     always @(posedge clk)
     begin
@@ -16,9 +17,9 @@ module baud_rate_generator(
         else
         begin
             counter <= counter + 1;
-        end
+        end 
     end
-    // divisor = 50,000,000 / 9600 ≈ 5208
+    // divisor = 50,000,000 / 9600 ≈ 5209
     // implement counter to divide clock
     // toggle baud_clk when counter reaches half the divisor
     // a baud rate is a measure of data transmission speed in a communication channel

@@ -16,4 +16,26 @@ module uart_top(
 );
     // Instantiate and connect submodules
 
+    // uart_mmio - handles the register interface
+    // uart_tx - transmits data
+    // uart_rx - receives data
+    // baud_rate_generator - creates timing signals
+    
+
+    uart_rx(
+        input clk, // oversampled baud clock (typically 16x)
+        input rx, // RX line
+        output reg [7:0] data, // received data
+        output reg data_valid // indicates new data available
+    );
+
+    uart_tx(
+        input clk,           // Baud rate clock
+        input [7:0] data,    // Data to send
+        input data_valid,    // Signal to start transmission
+        output reg tx,       // TX line
+        output reg tx_busy   // Indicates transmission in progress
+    );
+    
+
 endmodule
