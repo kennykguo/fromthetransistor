@@ -1,47 +1,39 @@
-// Pseudocode - design your own interface
 module uart_mmio(
     input clk,
     input reset,
     
     // bus interface
     input [32-1:0] addr,
-    
     input [8-1:0] write_data,
     input write_enable,
-    
     output reg [8-1:0] read_data,
     input read_enable,
     
     // uart signals
-    // rx is always ready to receive
-    input [7:0] rx_data, // comes from uart rx
-    input rx_data_valid, // comes from uart rx
-
-    output reg [7:0] tx_data, // goes to uart tx
-    output reg tx_data_valid, // goes to uart tx
-    input tx_busy // comes from uart tx
+    input [7:0] rx_data,
+    input rx_data_valid,
+    output reg [7:0] tx_data,
+    output reg tx_data_valid,
+    input tx_busy
 );
-    // register map:
-    // 0x00: status register (read-only)
-    // 0x04: data register
-    // internal counters for counting - lets say the buffer sizes are ten for input and output buffers
-    // the cpu and the uart interface are separately operating. this is why we have the mmio (memory managed input output)
-    // input buffer (put into buffer when user writes. taken out of buffer, when uart wants to write it out)
-    // output buffer (received from tx, and put into buffer. taken out from buffer when user wants to read)
+    // circular buffers
+    reg [7:0] tx_buffer [0:9];
+    reg [3:0] tx_write_ptr = 0;
+    reg [3:0] tx_read_ptr = 0;
+    reg [3:0] tx_count = 0;
 
-    reg [7:0] tx_buffer [0:9]; // 10 bytes total - circular buffer
-    reg [3:0] tx_write_ptr = 0; // points to next write location where cpu writes
-    reg [3:0] tx_read_ptr = 0; // points to next read location
-    reg [3:0] tx_count = 0;     // how many bytes currently stored
+    reg [7:0] rx_buffer [0:9];
+    reg [3:0] rx_write_ptr = 0;
+    reg [3:0] rx_read_ptr = 0;
+    reg [3:0] rx_count = 0;
 
-    reg [7:0] rx_buffer [0:9]; // 10 bytes total - circular buffer
-    reg [3:0] rx_write_ptr = 0; // points to next write location 
-    reg [3:0] rx_read_ptr = 0; // points to next read location where cpu reads
-    reg [3:0] rx_count = 0; // how many bytes currently stored
+    // fix timing race condition
+    reg tx_start_pending = 0;  // tracks if we need to start transmission
+    reg tx_busy_prev = 0;      // previous state of tx_busy for edge detection
 
-    parameter STATUS_REG = 32'h00, DATA_REG= 32'h04; 
-    wire rx_data_read = read_enable && (addr == DATA_REG); // read operation should trigger side effect
-    wire tx_data_write = write_enable && (addr == DATA_REG); // read operation should trigger side effect
+    parameter STATUS_REG = 32'h00, DATA_REG = 32'h04;
+    wire rx_data_read = read_enable && (addr == DATA_REG);
+    wire tx_data_write = write_enable && (addr == DATA_REG);
 
     always @(posedge clk) begin
         if (reset) begin
@@ -52,53 +44,58 @@ module uart_mmio(
             rx_read_ptr <= 0;
             rx_count <= 0;
             tx_data_valid <= 0;
+            tx_start_pending <= 0;
+            tx_busy_prev <= 0;
         end else begin
+            tx_data_valid <= 0;  // default to 0 (single cycle pulse)
+            tx_busy_prev <= tx_busy;  // track previous state
             
-            // transmit/send output buffer (cpu to mmio tx buffer)
-            if (tx_data_write && tx_count < 10'd10) begin
+            // cpu writes to tx buffer
+            if (tx_data_write && tx_count < 4'd10) begin
                 tx_buffer[tx_write_ptr] <= write_data;
                 tx_count <= tx_count + 1;
-                if (tx_write_ptr == 10'd9) begin
+                if (tx_write_ptr == 4'd9) begin
                     tx_write_ptr <= 0;
-                end
-                else begin
+                end else begin
                     tx_write_ptr <= tx_write_ptr + 1;
                 end
             end
 
-            // remove from input buffer (rx buffer to cpu)
+            // cpu reads from rx buffer
             if (rx_data_read && rx_count > 0) begin
-                if (rx_read_ptr == 10'd9) begin
+                if (rx_read_ptr == 4'd9) begin
                     rx_read_ptr <= 0;
-                end
-                else begin
+                end else begin
                     rx_read_ptr <= rx_read_ptr + 1;
                 end
                 rx_count <= rx_count - 1;
             end
 
-
-            // take out of input buffer and send to tx (mmio tx buffer to tx)
-            if (tx_count > 0 && ~tx_busy) begin
+            // start new transmission when uart becomes available
+            if (tx_count > 0 && ~tx_busy && ~tx_start_pending) begin
                 tx_data <= tx_buffer[tx_read_ptr];
-                tx_data_valid <= 1;
-                if (tx_read_ptr == 4'd9) begin  // fix the typo here
+                tx_data_valid <= 1;  // single cycle pulse
+                tx_start_pending <= 1;  // mark transmission started
+            end
+
+            // advance buffer when transmission actually completes
+            if (tx_start_pending && tx_busy_prev && ~tx_busy) begin
+                // tx_busy falling edge = transmission complete
+                tx_start_pending <= 0;
+                if (tx_read_ptr == 4'd9) begin
                     tx_read_ptr <= 0;
                 end else begin
                     tx_read_ptr <= tx_read_ptr + 1;
                 end
                 tx_count <= tx_count - 1;
-            end else begin
-                tx_data_valid <= 0;  // clear the pulse
             end
 
-            // take from rx output, put into rx buffer (rx to mmio rx buffer) - discarded if overflow ***
+            // uart_rx to rx buffer
             if (rx_data_valid && rx_count < 4'd10) begin
                 rx_buffer[rx_write_ptr] <= rx_data;
-                if (rx_write_ptr == 10'd9) begin
+                if (rx_write_ptr == 4'd9) begin
                     rx_write_ptr <= 0;
-                end
-                else begin
+                end else begin
                     rx_write_ptr <= rx_write_ptr + 1;
                 end
                 rx_count <= rx_count + 1;
@@ -106,10 +103,10 @@ module uart_mmio(
         end
     end
     
-    // drive the status registers
+    // combinational read logic
     always @(*) begin
         if (read_enable && addr == STATUS_REG) begin
-            read_data = {6'b0, rx_count > 0, tx_count < 10};  // rx_data_available, tx_available
+            read_data = {6'b0, rx_count > 0, tx_count < 4'd10};  // fixed width
         end else if (read_enable && addr == DATA_REG && rx_count > 0) begin
             read_data = rx_buffer[rx_read_ptr];
         end else begin
@@ -126,7 +123,7 @@ endmodule
 // uart_tx to uart_rx - loop back automatically implemented
 // uart_rx to uart_mmio
 // uart_mmio to rx buffer
-// rx buffer eventually to user via bus interface
+// rx buffer eventually to user through bus interface
 // bus interface signals
 // input [ADDR_WIDTH-1:0] addr - this carries the byte address that the cpu wants to access. the width is parameterized, but typically 32 bits. when the cpu executes something like *(volatile uint32_t*)0x1000 = data, that 0x1000 becomes the value on this addr bus. your logic needs to decode this address to determine which internal register is being targeted.
 // input [DATA_WIDTH-1:0] write_data - this carries the actual data value the cpu wants to write. if cpu does *(volatile uint32_t*)0x1004 = 0x41, then write_data will be 0x41. this data needs to be captured and processed based on which register the addr is pointing to.
