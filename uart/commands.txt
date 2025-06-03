@@ -1,0 +1,8 @@
+# ensure uart_testbench.cpp is in the same directory as your .v files
+verilator -Wall --cc uart_top.v uart_mmio.v uart_tx.v uart_rx.v --exe uart_testbench.cpp
+
+# build the executable
+make -C obj_dir -f Vuart_top.mk Vuart_top
+
+# run the testbench
+./obj_dir/Vuart_top

@@ -1,39 +1,52 @@
-// Pseudocode - implement your own top-level structure
+// Pseudocode - implement the top-level structure yourself from skeleton code
 module uart_top(
     input clk,
     input reset,
-    
-    // Bus interface
-    input [ADDR_WIDTH-1:0] addr,
-    input [DATA_WIDTH-1:0] write_data,
+    input [32-1:0] addr,
+    input [8-1:0] write_data,
     input write_enable,
-    input read_enable,
-    output [DATA_WIDTH-1:0] read_data,
-    
-    // UART external pins
-    output tx,
-    input rx
+    output [8-1:0] read_data,
+    input read_enable
 );
-    // Instantiate and connect submodules
+    wire tx_busy; // driven by uart_tx, used by uart_mmio
+    wire [7:0] rx_data; // driven by uart_rx, used by uart_mmio  
+    wire rx_data_valid; // driven by uart_rx, used by uart_mmio
+    wire [7:0] tx_data; // driven by uart_mmio, used by by uart_tx
+    wire tx_data_valid; // driven by uart_mmio, used by by uart_tx
+    wire tx, rx;
+    assign rx = tx; // drive eachother - loopback connection
 
-    // uart_mmio - handles the register interface
     // uart_tx - transmits data
+    // uart_mmio - handles the register interface
     // uart_rx - receives data
-    // baud_rate_generator - creates timing signals
-
-    uart_rx(
-        input clk, // oversampled baud clock (typically 16x)
-        input rx, // RX line
-        output reg [7:0] data, // received data
-        output reg data_valid // indicates new data available
+    uart_tx uart_tx_inst(
+    .clk(clk),
+    .data(tx_data),
+    .data_valid(tx_data_valid),
+    .tx(tx),
+    .tx_busy(tx_busy)
     );
 
-    uart_tx(
-        input clk,           // Baud rate clock
-        input [7:0] data,    // Data to send
-        input data_valid,    // Signal to start transmission
-        output reg tx,       // TX line
-        output reg tx_busy   // Indicates transmission in progress
+    uart_mmio uart_mmio_inst(
+        .clk(clk),
+        .reset(reset),
+        .addr(addr),
+        .write_data(write_data),
+        .write_enable(write_enable),
+        .read_data(read_data),
+        .read_enable(read_enable),
+        .rx_data(rx_data),
+        .rx_data_valid(rx_data_valid),
+        .tx_data(tx_data),
+        .tx_data_valid(tx_data_valid),
+        .tx_busy(tx_busy)
+    );
+
+    uart_rx uart_rx_inst(
+        .clk(clk),
+        .rx(rx),
+        .data(rx_data),
+        .data_valid(rx_data_valid)
     );
     
 
