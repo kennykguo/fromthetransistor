@@ -27,9 +27,8 @@ module uart_mmio(
     reg [3:0] rx_read_ptr = 0;
     reg [3:0] rx_count = 0;
 
-    // fix timing race condition
-    reg tx_start_pending = 0;  // tracks if we need to start transmission
-    reg tx_busy_prev = 0;      // previous state of tx_busy for edge detection
+    // simple fix: delay buffer advancement by one cycle
+    reg tx_data_sent = 0;      // tracks when we've sent data to uart_tx
 
     parameter STATUS_REG = 32'h00, DATA_REG = 32'h04;
     wire rx_data_read = read_enable && (addr == DATA_REG);
@@ -44,11 +43,9 @@ module uart_mmio(
             rx_read_ptr <= 0;
             rx_count <= 0;
             tx_data_valid <= 0;
-            tx_start_pending <= 0;
-            tx_busy_prev <= 0;
+            tx_data_sent <= 0;
         end else begin
             tx_data_valid <= 0;  // default to 0 (single cycle pulse)
-            tx_busy_prev <= tx_busy;  // track previous state
             
             // cpu writes to tx buffer
             if (tx_data_write && tx_count < 4'd10) begin
@@ -71,17 +68,16 @@ module uart_mmio(
                 rx_count <= rx_count - 1;
             end
 
-            // start new transmission when uart becomes available
-            if (tx_count > 0 && ~tx_busy && ~tx_start_pending) begin
+            // send data to uart_tx when available
+            if (tx_count > 0 && ~tx_busy && ~tx_data_sent) begin
                 tx_data <= tx_buffer[tx_read_ptr];
                 tx_data_valid <= 1;  // single cycle pulse
-                tx_start_pending <= 1;  // mark transmission started
+                tx_data_sent <= 1;   // mark that we sent data
             end
 
-            // advance buffer when transmission actually completes
-            if (tx_start_pending && tx_busy_prev && ~tx_busy) begin
-                // tx_busy falling edge = transmission complete
-                tx_start_pending <= 0;
+            // advance buffer when uart becomes busy (confirms it received data)
+            if (tx_data_sent && tx_busy) begin
+                tx_data_sent <= 0;
                 if (tx_read_ptr == 4'd9) begin
                     tx_read_ptr <= 0;
                 end else begin
