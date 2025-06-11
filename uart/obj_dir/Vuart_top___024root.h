@@ -36,7 +36,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vuart_top___024root final : public VerilatedM
     CData/*3:0*/ uart_top__DOT__uart_mmio_inst__DOT__rx_write_ptr;
     CData/*3:0*/ uart_top__DOT__uart_mmio_inst__DOT__rx_read_ptr;
     CData/*3:0*/ uart_top__DOT__uart_mmio_inst__DOT__rx_count;
-    CData/*0:0*/ uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent;
+    CData/*0:0*/ uart_top__DOT__uart_mmio_inst__DOT__tx_sending;
     CData/*7:0*/ uart_top__DOT__uart_mmio_inst__DOT____Vlvbound_hcc36a258__0;
     CData/*7:0*/ uart_top__DOT__uart_mmio_inst__DOT____Vlvbound_hd9962200__0;
     CData/*3:0*/ uart_top__DOT__uart_rx_inst__DOT__sample_counter;

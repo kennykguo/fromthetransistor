@@ -75,8 +75,8 @@ VL_INLINE_OPT void Vuart_top___024root___nba_sequent__TOP__0(Vuart_top___024root
     __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr = 0;
     CData/*3:0*/ __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_count;
     __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_count = 0;
-    CData/*0:0*/ __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent;
-    __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = 0;
+    CData/*0:0*/ __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending;
+    __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending = 0;
     CData/*3:0*/ __Vdlyvdim0__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0;
     __Vdlyvdim0__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0 = 0;
     CData/*7:0*/ __Vdlyvval__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0;
@@ -102,8 +102,8 @@ VL_INLINE_OPT void Vuart_top___024root___nba_sequent__TOP__0(Vuart_top___024root
     CData/*1:0*/ __Vdly__uart_top__DOT__uart_rx_inst__DOT__state_cur;
     __Vdly__uart_top__DOT__uart_rx_inst__DOT__state_cur = 0;
     // Body
-    __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent 
-        = vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent;
+    __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending 
+        = vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending;
     __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr 
         = vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr;
     __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_write_ptr 
@@ -313,7 +313,7 @@ VL_INLINE_OPT void Vuart_top___024root___nba_sequent__TOP__0(Vuart_top___024root
         __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr = 0U;
         __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_count = 0U;
         vlSelf->uart_top__DOT__tx_data_valid = 0U;
-        __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = 0U;
+        __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending = 0U;
     } else {
         vlSelf->uart_top__DOT__tx_data_valid = 0U;
         if ((((IData)(vlSelf->write_enable) & (4U == vlSelf->addr)) 
@@ -333,25 +333,24 @@ VL_INLINE_OPT void Vuart_top___024root___nba_sequent__TOP__0(Vuart_top___024root
                 = ((9U == (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_write_ptr))
                     ? 0U : (0xfU & ((IData)(1U) + (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_write_ptr))));
         }
-        if ((((0U < (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_count)) 
-              & (~ (IData)(vlSelf->uart_top__DOT__tx_busy))) 
-             & (~ (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent)))) {
+        if (((0U < (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_count)) 
+             & (~ (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending)))) {
             vlSelf->uart_top__DOT__tx_data = ((9U >= (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr))
                                                ? vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_buffer
                                               [vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr]
                                                : 0U);
             vlSelf->uart_top__DOT__tx_data_valid = 1U;
-            __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = 1U;
+            __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending = 1U;
         }
-        if (((IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent) 
-             & (IData)(vlSelf->uart_top__DOT__tx_busy))) {
+        if (((IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending) 
+             & (~ (IData)(vlSelf->uart_top__DOT__tx_busy)))) {
             __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr 
                 = ((9U == (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr))
                     ? 0U : (0xfU & ((IData)(1U) + (IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr))));
             __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_count 
                 = (0xfU & ((IData)(vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_count) 
                            - (IData)(1U)));
-            __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = 0U;
+            __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending = 0U;
         }
     }
     vlSelf->uart_top__DOT__uart_tx_inst__DOT__sample_counter 
@@ -365,8 +364,8 @@ VL_INLINE_OPT void Vuart_top___024root___nba_sequent__TOP__0(Vuart_top___024root
         = __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_write_ptr;
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr 
         = __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_read_ptr;
-    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent 
-        = __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent;
+    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending 
+        = __Vdly__uart_top__DOT__uart_mmio_inst__DOT__tx_sending;
     if (__Vdlyvset__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0) {
         vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_buffer[__Vdlyvdim0__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0] 
             = __Vdlyvval__uart_top__DOT__uart_mmio_inst__DOT__tx_buffer__v0;

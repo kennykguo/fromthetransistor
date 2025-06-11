@@ -30,7 +30,7 @@ VL_ATTR_COLD void Vuart_top___024root___eval_static__TOP(Vuart_top___024root* vl
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_write_ptr = 0U;
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_read_ptr = 0U;
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_count = 0U;
-    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = 0U;
+    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending = 0U;
     vlSelf->uart_top__DOT__uart_rx_inst__DOT__baud_counter = 0U;
     vlSelf->uart_top__DOT__uart_rx_inst__DOT__sample_counter = 0U;
     vlSelf->uart_top__DOT__uart_rx_inst__DOT__bit_counter = 0U;
@@ -207,7 +207,7 @@ VL_ATTR_COLD void Vuart_top___024root___ctor_var_reset(Vuart_top___024root* vlSe
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_write_ptr = VL_RAND_RESET_I(4);
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_read_ptr = VL_RAND_RESET_I(4);
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT__rx_count = VL_RAND_RESET_I(4);
-    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_data_sent = VL_RAND_RESET_I(1);
+    vlSelf->uart_top__DOT__uart_mmio_inst__DOT__tx_sending = VL_RAND_RESET_I(1);
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT____Vlvbound_hcc36a258__0 = VL_RAND_RESET_I(8);
     vlSelf->uart_top__DOT__uart_mmio_inst__DOT____Vlvbound_hd9962200__0 = VL_RAND_RESET_I(8);
     vlSelf->uart_top__DOT__uart_rx_inst__DOT__baud_counter = VL_RAND_RESET_I(9);
